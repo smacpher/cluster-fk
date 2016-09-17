@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<style>
+
+div#mp3_player{ width:500px; height:60px; background:#000; padding:5px; margin:0px auto; position: absolute; z-index: +1}
+div#mp3_player > div > audio{  width:500px; background:#000; float:left;  }
+div#mp3_player > canvas{ width:500px; height:30px; background:#002D3C; float:left; }
+
+#Canvas {
+            position: absolute;
+            z-index: -1
+        }
+
+</style>
+
+</head>
+<body>
+<div id="mp3_player">
+  <div id="audio_box"></div>
+  <canvas id="analyser_render"></canvas>
+</div>
+<canvas id="Canvas" width = "1000" height = "750"></canvas>
+<script>
+var song = "LeanOn.mp3"
+window.requestAnimFrame = (function(callback) {
+            return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+        function(callback) {
+          window.setTimeout(callback, 1000 / 60);
+        };
+        })();
+
+        var dots = []
+
+        function Dot(cx, cy, x, y, vx, vy, color) {
+            this.cx = cx
+            this.cy = cy
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.color = color;
+            this.radius = getRandomInt(2, 15)
+        }
+
+
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+
+        function getMousePos(canvas, evt) {
+            // get canvas position
+            var obj = canvas;
+            var top = 0;
+            var left = 0;
+            while(obj.tagName != 'BODY') {
+              top += obj.offsetTop;
+              left += obj.offsetLeft;
+              obj = obj.offsetParent;
+            }
+
+            // return relative mouse position
+            var mouseX = evt.clientX - left + window.pageXOffset;
+            var mouseY = evt.clientY + top/12 - window.pageYOffset;
+            return {
+              x: mouseX,
+              y: mouseY
+            };
+        }
+
+        function updateDots(canvas, dots, timeDiff) {
+            for (var n=0; n < dots.length; n++) {
+                dot = dots[n]
+                dot.x += dot.vx
+                dot.y += dot.vy
+                dot.radius = dot.radius - 0.01
+
+                if ( dot.radius <= 1) {
+                    dots.splice(n, 1)
+                }
+
+                //remove dot if goes off screen
+                if (((dot.x + dot.radius) < 0) || ((dot.y + dot.radius*2) < 0) || ((dot.x -dot.radius*2) > canvas.width) || ((dot.y - dot.radius*2) > canvas.height)) {
+                    dots.splice(n, 1)
+                }
+            }
+        }
+
+        function animate(canvas, dots, lastTime) {
+            var context = canvas.getContext('2d');
+
+            //update
+            var date = new Date();
+            var time = date.getTime();
+            var timeDiff = time - lastTime;
+            updateDots(canvas, dots, timeDiff);
+            lastTime = time;
+
+            //clear
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            //render
+            for (var n = 0; n < dots.length; n++) {
+                var dot = dots[n];
+                context.beginPath();
+                context.arc(dot.x, dot.y, dot.radius, 0, 2 * Math.PI, false);
+                context.fillStyle = dot.color;
+                context.fill();
+            }
+
+            //request new frame
+            requestAnimFrame(function() {
+                animate(canvas, dots, lastTime);
+            });
+        }
+
+        function drawBeat(cx, cy) {
+            var speed = 4
+            
+            var amount = 30
+
+            var angle = (2*Math.PI) / amount
+
+            var colorScheme1 = ['69D2E7', 'A7DBD8', 'E0E4CC', 'F38630', 'FA6900']
+
+            var colorScheme2 = ['FE4365', 'FC9D9A', 'F9CDAD', 'C8C8A9', '83AF9B']
+
+            var colorScheme3 = ['ECD078', 'D95B43', 'C02942', '542437', '53777A']
+
+            var colorScheme4 = ['556270', '4ECDC4', 'C7F464', 'FF6B6B', 'C44D58']
+
+            var colorScheme5 = ['D1F2A5', 'EFFAB4', 'FFC48C', 'FF9F80', 'F56991']
+
+            var colorScheme6 = ['FF4E50', 'FC913A', 'F9D423', 'EDE574', 'E1F5C4']
+
+            var colorSchemes = [colorScheme1, colorScheme2, colorScheme3, colorScheme4, colorScheme5, colorScheme6]
+
+            var colorSchemeIndex = getRandomInt(0, colorSchemes.length-1)
+
+            for (var n = 0; n < amount; n++) {
+
+                var colorIndex = n % (colorSchemes[colorSchemeIndex].length);
+
+                var vx = Math.cos(n*angle) * speed;
+                var vy = Math.sin(n*angle) * speed;
+                var newDot = new Dot(cx, cy, cx, cy, vx, vy, colorSchemes[colorSchemeIndex][colorIndex]);
+                dots.push(newDot);
+
+            }
+        }
+
+        var canvas = document.getElementById('Canvas');
+        var date = new Date()
+        var time = date.getTime();
+
+
+        canvas.addEventListener('click', function(evt) {
+            var pos = getMousePos(canvas, evt);
+
+            var cx = pos.x;
+            var cy = pos.y;
+
+            drawBeat(cx, cy);
+
+        });
+
+        animate(canvas, dots, time)
+
+// Create a new instance of an audio object and adjust some of its properties
+var sizes = []
+var audio = new Audio();
+audio.src = song;
+audio.controls = true;
+audio.loop = true;
+audio.autoplay = true;
+// Establish all variables that your Analyser will use
+var canvas, ctx, source, context, analyser, fbc_array, bars, bar_x, bar_width, bar_height;
+// Initialize the MP3 player after the page loads all of its HTML into the window
+window.addEventListener("load", initMp3Player, false);
+
+function initMp3Player(){
+    document.getElementById('audio_box').appendChild(audio);
+    context = new webkitAudioContext(); // AudioContext object instance
+    analyser = context.createAnalyser(); // AnalyserNode method
+    analyser.fftSize = 1024
+    canvas = document.getElementById('analyser_render');
+    ctx = canvas.getContext('2d');
+    // Re-route audio playback into the processing graph of the AudioContext
+    source = context.createMediaElementSource(audio); 
+    source.connect(analyser)
+    analyser.connect(context.destination);
+    frameLooper();
+}
+
+// frameLooper() animates any style of graphics you wish to the audio frequency
+// Looping at the default frame rate that the browser provides(approx. 60 FPS)
+function getAvg(start, end) {
+    var sum = 0
+    for (var i = start; i < end; i++) {
+        sum += sizes[i]
+    }
+
+    var length = end-start
+    return sum/length
+}
+
+function getPeaksAtThreshold(data, threshold) {
+  var peaksArray = [];
+  var length = data.length;
+  for(var i = 0; i < length;) {
+    if (data[i] > threshold) {
+      peaksArray.push(i);
+      // Skip forward ~ 1/4s to get past this peak.
+      i += 10000;
+    }
+    i++;
+  }
+  return peaksArray;
+}
+
+var beatDrawn = false
+
+function frameLooper(){
+    window.webkitRequestAnimationFrame(frameLooper);
+    fbc_array = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(fbc_array);
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+    ctx.fillStyle = '#fff'; // Color of the bars
+    var size = 0
+    var bars = fbc_array.length
+    console.log(bars)
+    for (var i = 0; i < bars; i++) {
+        size = size + fbc_array[i]
+        bar_x = i * 3;
+        bar_width = 2;
+        bar_height = -(fbc_array[i] / 2);
+        //  fillRect( x, y, width, height ) // Explanation of the parameters below
+        ctx.fillRect(bar_x, canvas.height, bar_width, bar_height);
+    }
+
+    var size = size/bars
+
+    if (sizes.length > 20) {
+        var start = sizes.length - 20
+        var end = sizes.length
+    } else {
+        var start = 0
+        var end = sizes.length
+    }
+
+    var avg = getAvg(start, end)
+
+    sizes.push(size)
+
+    var beatCanvas = document.getElementById('Canvas');
+
+    if (size > avg) {
+
+        if (beatDrawn == false) {
+            drawBeat(beatCanvas.width/2, beatCanvas.height/2);
+            beatDrawn = true
+        }     
+    } else {
+        beatDrawn = false
+    }
+}
+
+</script>
+</body>
+</html>

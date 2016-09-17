@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="treeStyle.css">
+    <title>trees</title>
+</head>
+
+
+<body>
+
+<canvas id="Canvas" width="750" height="750">
+
+<script type="text/javascript">
+
+    var min_length = 10
+ 
+    function drawTrunk(basePoint, length, width, angle, color) {
+        var bx = basePoint[0],
+            by = basePoint[1]
+
+        var endPoint = [bx + length * Math.cos(angle), by - length * Math.sin(angle)]
+
+        var ex = endPoint[0],
+            ey = endPoint[1]
+
+        var canvas = document.getElementById('Canvas')
+        var ctx = canvas.getContext('2d')
+
+        //draw line
+        ctx.beginPath();
+        ctx.moveTo(bx, by)
+        ctx.lineTo(ex, ey)
+        ctx.strokeStyle = color;
+        ctx.stroke();
+
+
+    }
+
+    function generateRandomNumber(min, max) {
+
+        highlightedNumber = Math.random() * (max - min) + min;
+
+        return highlightedNumber
+    }
+
+    
+
+    function drawTree(basePoint, length, width, angle, level) {
+        var bx = basePoint[0],
+            by = basePoint[1]
+
+        if (level > 0) {
+
+            if (level > 4) {
+                var color = "#53350A"
+            } else {
+                var color = "#04740D"
+            }
+
+            drawTrunk(basePoint, length, width, angle, color)
+
+            var newBasePoint = [bx + length * Math.cos(angle), by - length * Math.sin(angle)]
+
+            drawTree(newBasePoint, 3/4 *length, width, angle - generateRandomNumber(Math.PI/8, Math.PI/4), level - 1)
+
+            drawTree(newBasePoint, 3/4 *length, width, angle + generateRandomNumber(Math.PI/8, Math.PI/4), level - 1)
+
+        } else {
+            return
+        }
+
+    }
+
+    
+
+    function drawTrees(amount) {
+
+        var canvas = document.getElementById('Canvas')
+        var width = canvas.width
+        var margin = 30
+        for (var i = 0; i < amount; i++) {
+
+            var size = generateRandomNumber(25, 50)
+
+            var angle = generateRandomNumber(Math.PI/2 - Math.PI/12, Math.PI/2 + Math.PI/12)
+            var levels = generateRandomNumber(8, 11)
+
+            drawTree([margin + i * width/amount, canvas.height/2 + 50], size, 0, angle , levels)
+        }
+
+    }
+    
+    drawTrees(10)
+</script>
+
+
+</body>
+</html>
