@@ -7,5 +7,5 @@ A bunch of random animations:
 
 ## Treeeeeeeeeees
 
-<img src="https://github.com/smacpher/cluster-fk/blob/725333ace792819f21844f1743ac226d78500e43/trees.gif" width="150">
+<img src="https://github.com/smacpher/cluster-fk/blob/725333ace792819f21844f1743ac226d78500e43/trees.gif" width="450">
 
